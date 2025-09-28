@@ -11,7 +11,7 @@ import { LevelTransitionScreen } from '@/components/game/level-transition-screen
 
 import type { GameObject, GameState, KeysPressed } from '@/lib/types';
 import {
-  GAME_WIDTH, GAME_HEIGHT, PLAYER_WIDTH, PLAYER_HEIGHT, PLAYER_SPEED, SHOT_WIDTH, SHOT_HEIGHT, PLAYER_SHOT_SPEED, ENEMY_SHOT_SPEED, SHOT_COOLDOWN, INITIAL_LIVES, OPPONENT_WIDTH, OPPONENT_HEIGHT, PENTAGON_BOSS_WIDTH, PENTAGON_BOSS_HEIGHT
+  GAME_WIDTH, GAME_HEIGHT, PLAYER_WIDTH, PLAYER_HEIGHT, PLAYER_SPEED, SHOT_WIDTH, SHOT_HEIGHT, PLAYER_SHOT_SPEED, ENEMY_SHOT_SPEED, SHOT_COOLDOWN, INITIAL_LIVES, OPPONENT_WIDTH, OPPONENT_HEIGHT, PENTAGON_BOSS_WIDTH, PENTAGON_BOSS_HEIGHT, SQUARE_BOSS_WIDTH, SQUARE_BOSS_HEIGHT, BOSS_WIDTH, BOSS_HEIGHT, MAX_ROUNDS
 } from '@/lib/constants';
 
 export default function StarDefenderGame() {
@@ -31,35 +31,63 @@ export default function StarDefenderGame() {
   const [lastShotTime, setLastShotTime] = useState(0);
   const [isInvincible, setIsInvincible] = useState(false);
 
-  const setupRound = useCallback((currentRound: number, currentLevel: number) => {
+  const setupRound = useCallback((currentRound: number) => {
     setPlayer({ id: 0, x: GAME_WIDTH / 2 - PLAYER_WIDTH / 2, y: GAME_HEIGHT - PLAYER_HEIGHT - 20, width: PLAYER_WIDTH, height: PLAYER_HEIGHT });
     setPlayerShots([]);
     setEnemyShots([]);
     setExplosions([]);
 
+    let newOpponents: GameObject[] = [];
     if (currentRound === 1) {
-      setOpponents([{
+      newOpponents = [{
         id: Date.now(),
         type: 'triangle',
         x: GAME_WIDTH / 2 - OPPONENT_WIDTH / 2,
         y: 50,
         width: OPPONENT_WIDTH,
         height: OPPONENT_HEIGHT,
-        dx: 2 + currentLevel * 0.5,
+        dx: 2,
         dy: 0,
-      }]);
-    } else {
-      setOpponents([{
+        health: 1,
+      }];
+    } else if (currentRound === 2) {
+      newOpponents = [{
         id: Date.now(),
         type: 'pentagon',
         x: GAME_WIDTH / 2 - PENTAGON_BOSS_WIDTH / 2,
         y: 50,
         width: PENTAGON_BOSS_WIDTH,
         height: PENTAGON_BOSS_HEIGHT,
-        dx: 3 + currentLevel * 0.5,
+        dx: 3,
         dy: 0,
-      }]);
+        health: 3,
+      }];
+    } else if (currentRound === 3) {
+      newOpponents = [{
+        id: Date.now(),
+        type: 'square',
+        x: GAME_WIDTH / 2 - SQUARE_BOSS_WIDTH / 2,
+        y: 50,
+        width: SQUARE_BOSS_WIDTH,
+        height: SQUARE_BOSS_HEIGHT,
+        dx: 4,
+        dy: 0,
+        health: 5,
+      }];
+    } else if (currentRound === 4) {
+      newOpponents = [{
+        id: Date.now(),
+        type: 'boss',
+        x: GAME_WIDTH / 2 - BOSS_WIDTH / 2,
+        y: 50,
+        width: BOSS_WIDTH,
+        height: BOSS_HEIGHT,
+        dx: 2,
+        dy: 0,
+        health: 10,
+      }];
     }
+    setOpponents(newOpponents);
   }, []);
 
   const startGame = useCallback(() => {
@@ -67,20 +95,19 @@ export default function StarDefenderGame() {
     setLives(INITIAL_LIVES);
     setRound(1);
     setLevel(1);
-    setupRound(1, 1);
+    setupRound(1);
     setGameState('playing');
   }, [setupRound]);
 
-  const handleLevelTransition = useCallback(() => {
+  const handleNextRound = useCallback(() => {
     setGameState('levelTransition');
-    const newLevel = level; // Keep same level
     const nextRound = round + 1;
     setRound(nextRound);
     setTimeout(() => {
-      setupRound(nextRound, newLevel);
+      setupRound(nextRound);
       setGameState('playing');
     }, 2000);
-  }, [round, level, setupRound]);
+  }, [round, setupRound]);
   
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => setKeysPressed(prev => ({...prev, [e.key.toLowerCase()]: true }));
@@ -124,7 +151,7 @@ export default function StarDefenderGame() {
         let newX = opp.x + (opp.dx ?? 0);
         let newDx = opp.dx ?? 2;
         if (newX <= 0 || newX >= GAME_WIDTH - opp.width) newDx *= -1;
-        if (Math.random() < 0.01 + level * 0.005) {
+        if (Math.random() < 0.01 + round * 0.005) {
             setEnemyShots(shots => [...shots, {
                 id: Date.now() + Math.random(), x: opp.x + opp.width / 2 - SHOT_WIDTH / 2, y: opp.y + opp.height, width: SHOT_WIDTH, height: SHOT_HEIGHT
             }]);
@@ -133,24 +160,32 @@ export default function StarDefenderGame() {
       }));
 
       // Collision Detection
-      let hitOpponentIds = new Set();
       let hitPlayerShotIds = new Set();
+      let updatedOpponents = [...opponents];
       
       playerShots.forEach(shot => {
-        opponents.forEach(opp => {
+        updatedOpponents.forEach((opp, oppIndex) => {
+          if (hitPlayerShotIds.has(shot.id)) return;
+
           if (shot.x < opp.x + opp.width && shot.x + shot.width > opp.x && shot.y < opp.y + opp.height && shot.y + shot.height > opp.y) {
-            hitOpponentIds.add(opp.id);
             hitPlayerShotIds.add(shot.id);
-            setScore(s => s + 100);
-            const explosion = { id: opp.id, x: opp.x, y: opp.y, width: opp.width, height: opp.height };
-            setExplosions(ex => [...ex, explosion]);
-            setTimeout(() => setExplosions(ex => ex.filter(e => e.id !== explosion.id)), 300);
+            const newHealth = (opp.health ?? 1) - 1;
+
+            if (newHealth <= 0) {
+              updatedOpponents.splice(oppIndex, 1);
+              setScore(s => s + 100);
+              const explosion = { id: opp.id, x: opp.x, y: opp.y, width: opp.width, height: opp.height };
+              setExplosions(ex => [...ex, explosion]);
+              setTimeout(() => setExplosions(ex => ex.filter(e => e.id !== explosion.id)), 300);
+            } else {
+              updatedOpponents[oppIndex] = { ...opp, health: newHealth };
+            }
           }
         });
       });
       
-      if (hitOpponentIds.size > 0) {
-        setOpponents(opps => opps.filter(o => !hitOpponentIds.has(o.id)));
+      if (hitPlayerShotIds.size > 0) {
+        setOpponents(updatedOpponents);
         setPlayerShots(shots => shots.filter(s => !hitPlayerShotIds.has(s.id)));
       }
 
@@ -181,7 +216,7 @@ export default function StarDefenderGame() {
     animationFrameId = requestAnimationFrame(gameLoop);
     return () => cancelAnimationFrame(animationFrameId);
 
-  }, [gameState, keysPressed, player.x, player.y, lastShotTime, opponents, playerShots, enemyShots, isInvincible, level]);
+  }, [gameState, keysPressed, player.x, player.y, lastShotTime, opponents, playerShots, enemyShots, isInvincible, round]);
 
   useEffect(() => {
     if (gameState === 'playing' && lives <= 0) {
@@ -191,13 +226,13 @@ export default function StarDefenderGame() {
 
   useEffect(() => {
     if (gameState === 'playing' && opponents.length === 0) {
-      if (round === 1) {
-        handleLevelTransition();
-      } else if (round === 2) {
+      if (round < MAX_ROUNDS) {
+        handleNextRound();
+      } else {
         setGameState('win');
       }
     }
-  }, [opponents, round, gameState, handleLevelTransition]);
+  }, [opponents, round, gameState, handleNextRound]);
   
   const gameContent = useMemo(() => {
     switch (gameState) {

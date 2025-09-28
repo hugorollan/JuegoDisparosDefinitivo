@@ -18,3 +18,10 @@ export const OPPONENT_HEIGHT = 40;
 
 export const PENTAGON_BOSS_WIDTH = 60;
 export const PENTAGON_BOSS_HEIGHT = 60;
+export const SQUARE_BOSS_WIDTH = 50;
+export const SQUARE_BOSS_HEIGHT = 50;
+
+export const BOSS_WIDTH = 80;
+export const BOSS_HEIGHT = 80;
+
+export const MAX_ROUNDS = 4;

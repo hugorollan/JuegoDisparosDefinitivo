@@ -1,7 +1,7 @@
 "use client";
 
 import type { GameObject } from '@/lib/types';
-import { PlayerIcon, TriangleOpponentIcon, PentagonOpponentIcon } from '@/components/game-icons';
+import { PlayerIcon, TriangleOpponentIcon, PentagonOpponentIcon, SquareOpponentIcon, BossIcon } from '@/components/game-icons';
 import { GAME_WIDTH, GAME_HEIGHT } from '@/lib/constants';
 import { cn } from '@/lib/utils';
 
@@ -23,6 +23,18 @@ const Explosion = ({ x, y, width }: { x: number; y: number; width: number; }) =>
     );
 };
 
+const HealthBar = ({ health, maxHealth }: { health: number; maxHealth: number }) => {
+    const healthPercentage = (health / maxHealth) * 100;
+    return (
+        <div className="w-full h-1.5 bg-gray-700 rounded-full mt-1">
+            <div
+                className="h-1.5 rounded-full bg-primary"
+                style={{ width: `${healthPercentage}%` }}
+            ></div>
+        </div>
+    );
+};
+
 export function GameArea({ player, playerShots, opponents, enemyShots, explosions, isInvincible }: GameAreaProps) {
   return (
     <div
@@ -39,7 +51,18 @@ export function GameArea({ player, playerShots, opponents, enemyShots, explosion
 
       {opponents.map(opp => (
         <div key={opp.id} className="text-primary" style={{ position: 'absolute', left: opp.x, top: opp.y, width: opp.width, height: opp.height }}>
-          {opp.type === 'pentagon' ? <PentagonOpponentIcon /> : <TriangleOpponentIcon />}
+            {opp.type === 'pentagon' ? <PentagonOpponentIcon /> 
+           : opp.type === 'square' ? <SquareOpponentIcon />
+           : opp.type === 'boss' ? <BossIcon />
+           : <TriangleOpponentIcon />}
+          {opp.health && opp.health > 1 && (
+            <HealthBar health={opp.health} maxHealth={
+                opp.type === 'pentagon' ? 3 
+              : opp.type === 'square' ? 5 
+              : opp.type === 'boss' ? 10 
+              : 1
+            } />
+          )}
         </div>
       ))}
 

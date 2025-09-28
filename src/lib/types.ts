@@ -6,7 +6,8 @@ export interface GameObject {
   height: number;
   dx?: number;
   dy?: number;
-  type?: 'triangle' | 'pentagon';
+  type?: 'triangle' | 'pentagon' | 'square' | 'boss';
+  health?: number;
 }
 
 export type GameState = 'start' | 'playing' | 'gameOver' | 'win' | 'levelTransition';
