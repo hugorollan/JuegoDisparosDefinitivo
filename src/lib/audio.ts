@@ -69,20 +69,6 @@ const menuTheme = [
 ];
 
 
-const pauseTheme = [
-    { freq: 220.00, duration: 0.5, delay: 0 },
-    { freq: 220.00, duration: 0.5, delay: 0.75 },
-    { freq: 220.00, duration: 0.5, delay: 1.5 },
-    { freq: 261.63, duration: 0.75, delay: 2.25 },
-    { freq: 220.00, duration: 0.5, delay: 3 },
-    { freq: 220.00, duration: 0.5, delay: 3.75 },
-    { freq: 196.00, duration: 1, delay: 4.5 },
-];
-
 export const playMenuMusic = () => {
   playMusic(menuTheme, 140, true);
 };
-
-export const playPauseMusic = () => {
-    playMusic(pauseTheme, 100, true);
-}
