@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 
 import { GameArea } from '@/components/game/game-area';
 import { Hud } from '@/components/game/hud';
@@ -30,6 +30,34 @@ export default function StarDefenderGame() {
 
   const [lastShotTime, setLastShotTime] = useState(0);
   const [isInvincible, setIsInvincible] = useState(false);
+  
+  const audioContextRef = useRef<AudioContext | null>(null);
+
+  const playShotSound = useCallback(() => {
+    if (!audioContextRef.current) {
+        if (typeof window !== 'undefined' && (window.AudioContext || (window as any).webkitAudioContext)) {
+            audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+        }
+    }
+    const audioContext = audioContextRef.current;
+    if (!audioContext) return;
+
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+
+    oscillator.type = 'square';
+    oscillator.frequency.setValueAtTime(440, audioContext.currentTime);
+    oscillator.frequency.exponentialRampToValueAtTime(100, audioContext.currentTime + 0.1);
+
+    gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.0001, audioContext.currentTime + 0.1);
+
+    oscillator.start(audioContext.currentTime);
+    oscillator.stop(audioContext.currentTime + 0.1);
+  }, []);
 
   const setupRound = useCallback((currentRound: number) => {
     setPlayer({ id: 0, x: GAME_WIDTH / 2 - PLAYER_WIDTH / 2, y: GAME_HEIGHT - PLAYER_HEIGHT - 20, width: PLAYER_WIDTH, height: PLAYER_HEIGHT });
@@ -141,6 +169,7 @@ export default function StarDefenderGame() {
           id: now, x: player.x + player.width / 2 - SHOT_WIDTH / 2, y: player.y, width: SHOT_WIDTH, height: SHOT_HEIGHT
         }]);
         setLastShotTime(now);
+        playShotSound();
       }
       
       // Update positions
@@ -216,7 +245,7 @@ export default function StarDefenderGame() {
     animationFrameId = requestAnimationFrame(gameLoop);
     return () => cancelAnimationFrame(animationFrameId);
 
-  }, [gameState, keysPressed, player.x, player.y, lastShotTime, opponents, playerShots, enemyShots, isInvincible, round]);
+  }, [gameState, keysPressed, player.x, player.y, lastShotTime, opponents, playerShots, enemyShots, isInvincible, round, playShotSound]);
 
   useEffect(() => {
     if (gameState === 'playing' && lives <= 0) {
