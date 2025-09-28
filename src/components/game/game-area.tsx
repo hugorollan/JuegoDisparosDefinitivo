@@ -1,7 +1,7 @@
 "use client";
 
 import type { GameObject } from '@/lib/types';
-import { PlayerIcon, TriangleOpponentIcon, PentagonOpponentIcon, SquareOpponentIcon, BossIcon } from '@/components/game-icons';
+import { PlayerIcon, TriangleOpponentIcon, PentagonOpponentIcon, SquareOpponentIcon, BossIcon, OctagonOpponentIcon, HexagonOpponentIcon } from '@/components/game-icons';
 import { GAME_WIDTH, GAME_HEIGHT } from '@/lib/constants';
 import { cn } from '@/lib/utils';
 
@@ -54,12 +54,16 @@ export function GameArea({ player, playerShots, opponents, enemyShots, explosion
             {opp.type === 'pentagon' ? <PentagonOpponentIcon /> 
            : opp.type === 'square' ? <SquareOpponentIcon />
            : opp.type === 'boss' ? <BossIcon />
+           : opp.type === 'octagon' ? <OctagonOpponentIcon />
+           : opp.type === 'hexagon' ? <HexagonOpponentIcon />
            : <TriangleOpponentIcon />}
           {opp.health && opp.health > 1 && (
             <HealthBar health={opp.health} maxHealth={
                 opp.type === 'pentagon' ? 3 
               : opp.type === 'square' ? 5 
-              : opp.type === 'boss' ? 10 
+              : opp.type === 'boss' ? 10
+              : opp.type === 'octagon' ? 15
+              : opp.type === 'hexagon' ? 20
               : 1
             } />
           )}

@@ -30,3 +30,15 @@ export const BossIcon = (props: SVGProps<SVGSVGElement>) => (
         <path d="M12 12.5l3.54 2.42-.76 4.43L12 16.5l-3.54 2.85.76-4.43L4 14.65l4.55-.88L12 12.5z" stroke="hsl(var(--accent))" strokeWidth="1" />
     </svg>
 );
+
+export const OctagonOpponentIcon = (props: SVGProps<SVGSVGElement>) => (
+  <svg viewBox="0 0 20 20" fill="currentColor" {...props}>
+    <path d="M7 2 L13 2 L18 7 L18 13 L13 18 L7 18 L2 13 L2 7 Z" />
+  </svg>
+);
+
+export const HexagonOpponentIcon = (props: SVGProps<SVGSVGElement>) => (
+  <svg viewBox="0 0 20 20" fill="currentColor" {...props}>
+    <path d="M10 2 L18 6 L18 14 L10 18 L2 14 L2 6 Z" />
+  </svg>
+);

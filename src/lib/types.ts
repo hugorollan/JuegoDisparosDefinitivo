@@ -6,7 +6,7 @@ export interface GameObject {
   height: number;
   dx?: number;
   dy?: number;
-  type?: 'triangle' | 'pentagon' | 'square' | 'boss';
+  type?: 'triangle' | 'pentagon' | 'square' | 'boss' | 'octagon' | 'hexagon';
   health?: number;
 }
 

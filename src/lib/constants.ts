@@ -24,4 +24,9 @@ export const SQUARE_BOSS_HEIGHT = 50;
 export const BOSS_WIDTH = 80;
 export const BOSS_HEIGHT = 80;
 
-export const MAX_ROUNDS = 4;
+export const OCTAGON_BOSS_WIDTH = 70;
+export const OCTAGON_BOSS_HEIGHT = 70;
+export const HEXAGON_BOSS_WIDTH = 65;
+export const HEXAGON_BOSS_HEIGHT = 65;
+
+export const MAX_ROUNDS = 6;

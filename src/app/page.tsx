@@ -11,7 +11,7 @@ import { LevelTransitionScreen } from '@/components/game/level-transition-screen
 
 import type { GameObject, GameState, KeysPressed } from '@/lib/types';
 import {
-  GAME_WIDTH, GAME_HEIGHT, PLAYER_WIDTH, PLAYER_HEIGHT, PLAYER_SPEED, SHOT_WIDTH, SHOT_HEIGHT, PLAYER_SHOT_SPEED, ENEMY_SHOT_SPEED, SHOT_COOLDOWN, INITIAL_LIVES, OPPONENT_WIDTH, OPPONENT_HEIGHT, PENTAGON_BOSS_WIDTH, PENTAGON_BOSS_HEIGHT, SQUARE_BOSS_WIDTH, SQUARE_BOSS_HEIGHT, BOSS_WIDTH, BOSS_HEIGHT, MAX_ROUNDS
+  GAME_WIDTH, GAME_HEIGHT, PLAYER_WIDTH, PLAYER_HEIGHT, PLAYER_SPEED, SHOT_WIDTH, SHOT_HEIGHT, PLAYER_SHOT_SPEED, ENEMY_SHOT_SPEED, SHOT_COOLDOWN, INITIAL_LIVES, OPPONENT_WIDTH, OPPONENT_HEIGHT, PENTAGON_BOSS_WIDTH, PENTAGON_BOSS_HEIGHT, SQUARE_BOSS_WIDTH, SQUARE_BOSS_HEIGHT, BOSS_WIDTH, BOSS_HEIGHT, MAX_ROUNDS, OCTAGON_BOSS_WIDTH, OCTAGON_BOSS_HEIGHT, HEXAGON_BOSS_WIDTH, HEXAGON_BOSS_HEIGHT
 } from '@/lib/constants';
 import { playMenuMusic, stopMusic, playGameMusic } from '@/lib/audio';
 
@@ -222,6 +222,30 @@ export default function StarDefenderGame() {
         dx: 2,
         dy: 0,
         health: 10,
+      }];
+    } else if (currentRound === 5) {
+      newOpponents = [{
+        id: Date.now(),
+        type: 'octagon',
+        x: GAME_WIDTH / 2 - OCTAGON_BOSS_WIDTH / 2,
+        y: 50,
+        width: OCTAGON_BOSS_WIDTH,
+        height: OCTAGON_BOSS_HEIGHT,
+        dx: 5,
+        dy: 0,
+        health: 15,
+      }];
+    } else if (currentRound === 6) {
+      newOpponents = [{
+        id: Date.now(),
+        type: 'hexagon',
+        x: GAME_WIDTH / 2 - HEXAGON_BOSS_WIDTH / 2,
+        y: 50,
+        width: HEXAGON_BOSS_WIDTH,
+        height: HEXAGON_BOSS_HEIGHT,
+        dx: 6,
+        dy: 0,
+        health: 20,
       }];
     }
     setOpponents(newOpponents);
