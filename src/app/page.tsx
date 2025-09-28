@@ -112,6 +112,62 @@ export default function StarDefenderGame() {
     oscillator.stop(audioContext.currentTime + 0.2);
   }, []);
 
+  const playPlayerHitSound = useCallback(() => {
+    if (!audioContextRef.current) {
+      if (typeof window !== 'undefined' && (window.AudioContext || (window as any).webkitAudioContext)) {
+          audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+      }
+    }
+    const audioContext = audioContextRef.current;
+    if (!audioContext) return;
+
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+
+    oscillator.type = 'sine';
+    oscillator.frequency.setValueAtTime(300, audioContext.currentTime);
+    oscillator.frequency.exponentialRampToValueAtTime(100, audioContext.currentTime + 0.3);
+
+    gainNode.gain.setValueAtTime(0.4, audioContext.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.0001, audioContext.currentTime + 0.3);
+
+    oscillator.start(audioContext.currentTime);
+    oscillator.stop(audioContext.currentTime + 0.3);
+  }, []);
+
+  const playGameOverSound = useCallback(() => {
+    if (!audioContextRef.current) {
+      if (typeof window !== 'undefined' && (window.AudioContext || (window as any).webkitAudioContext)) {
+          audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+      }
+    }
+    const audioContext = audioContextRef.current;
+    if (!audioContext) return;
+
+    const freqs = [164.81, 155.56, 146.83, 138.59];
+    let time = audioContext.currentTime;
+
+    freqs.forEach((freq) => {
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+
+      oscillator.type = 'triangle';
+      oscillator.frequency.setValueAtTime(freq, time);
+
+      gainNode.gain.setValueAtTime(0.2, time);
+      gainNode.gain.exponentialRampToValueAtTime(0.0001, time + 0.5);
+
+      oscillator.start(time);
+      oscillator.stop(time + 0.5);
+      time += 0.15;
+    });
+  }, []);
+
   const setupRound = useCallback((currentRound: number) => {
     setPlayer({ id: 0, x: GAME_WIDTH / 2 - PLAYER_WIDTH / 2, y: GAME_HEIGHT - PLAYER_HEIGHT - 20, width: PLAYER_WIDTH, height: PLAYER_HEIGHT });
     setPlayerShots([]);
@@ -306,6 +362,7 @@ export default function StarDefenderGame() {
 
       if (playerIsHit) {
         setLives(l => l - 1);
+        playPlayerHitSound();
         setIsInvincible(true);
         setTimeout(() => setIsInvincible(false), 1500);
       }
@@ -320,13 +377,14 @@ export default function StarDefenderGame() {
     animationFrameId = requestAnimationFrame(gameLoop);
     return () => cancelAnimationFrame(animationFrameId);
 
-  }, [gameState, keysPressed, player.x, player.y, lastShotTime, opponents, playerShots, enemyShots, isInvincible, round, playShotSound, playExplosionSound, playEnemyShotSound]);
+  }, [gameState, keysPressed, player.x, player.y, lastShotTime, opponents, playerShots, enemyShots, isInvincible, round, playShotSound, playExplosionSound, playEnemyShotSound, playPlayerHitSound]);
 
   useEffect(() => {
     if (gameState === 'playing' && lives <= 0) {
+      playGameOverSound();
       setGameState('gameOver');
     }
-  }, [lives, gameState]);
+  }, [lives, gameState, playGameOverSound]);
 
   useEffect(() => {
     if (gameState === 'playing' && opponents.length === 0) {
@@ -367,3 +425,5 @@ export default function StarDefenderGame() {
     </main>
   );
 }
+
+  
