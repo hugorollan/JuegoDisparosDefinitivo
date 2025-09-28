@@ -3,6 +3,9 @@
 let audioContext: AudioContext | null = null;
 let musicSource: AudioBufferSourceNode | null = null;
 let musicGainNode: GainNode | null = null;
+let musicPlaying = false;
+let loopTimeout: NodeJS.Timeout | null = null;
+
 
 const getAudioContext = () => {
   if (typeof window !== 'undefined' && !audioContext) {
@@ -20,6 +23,9 @@ const playMusic = (notes: { freq: number, duration: number, delay: number }[], t
   musicSource = context.createBufferSource();
   musicGainNode = context.createGain();
   musicGainNode.gain.value = 0.1; // Music volume
+  
+  if (!musicSource || !musicGainNode) return;
+
   musicSource.connect(musicGainNode);
   musicGainNode.connect(context.destination);
 
@@ -39,16 +45,23 @@ const playMusic = (notes: { freq: number, duration: number, delay: number }[], t
     oscillator.start(startTime + note.delay * noteDuration);
     oscillator.stop(startTime + (note.delay + note.duration) * noteDuration);
   });
+
+  musicSource.start(0);
+  musicPlaying = true;
   
   if (loop) {
     const totalDuration = notes.reduce((max, note) => Math.max(max, note.delay + note.duration), 0) * noteDuration * 1000;
-    setTimeout(() => playMusic(notes, tempo, loop), totalDuration);
+    if (loopTimeout) clearTimeout(loopTimeout);
+    loopTimeout = setTimeout(() => playMusic(notes, tempo, loop), totalDuration);
   }
 };
 
 export const stopMusic = () => {
-  if (musicSource) {
-    // We can't actually stop the scheduled notes, so we just mute them.
+  if (loopTimeout) {
+    clearTimeout(loopTimeout);
+    loopTimeout = null;
+  }
+  if (musicPlaying && musicSource) {
     if (musicGainNode) {
       musicGainNode.gain.cancelScheduledValues(0);
       musicGainNode.gain.setValueAtTime(0, 0);
@@ -57,6 +70,7 @@ export const stopMusic = () => {
     musicSource.disconnect();
     musicSource = null;
   }
+  musicPlaying = false;
 };
 
 const menuTheme = [
