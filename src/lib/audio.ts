@@ -47,8 +47,10 @@ const playMusic = (notes: { freq: number, duration: number, delay: number }[], t
     oscillator.stop(startTime + (note.delay + note.duration) * noteDuration);
   });
 
-  musicSource.start(0);
-  musicPlaying = true;
+  if (musicSource) {
+    musicSource.start(0);
+    musicPlaying = true;
+  }
   
   if (loop) {
     const totalDuration = notes.reduce((max, note) => Math.max(max, note.delay + note.duration), 0) * noteDuration * 1000;
@@ -97,6 +99,13 @@ const gameTheme = [
   { freq: 349.23, duration: 0.5, delay: 2.5 }, { freq: 329.63, duration: 0.5, delay: 3.0 },
 ];
 
+const gameOverTheme = [
+  { freq: 110.00, duration: 1, delay: 0 }, { freq: 103.83, duration: 1, delay: 1 },
+  { freq: 98.00, duration: 2, delay: 2 },
+  { freq: 110.00, duration: 0.5, delay: 4 }, { freq: 103.83, duration: 0.5, delay: 4.5 },
+  { freq: 98.00, duration: 1, delay: 5 },
+];
+
 
 export const playMenuMusic = () => {
   playMusic(menuTheme, 140, true);
@@ -104,4 +113,8 @@ export const playMenuMusic = () => {
 
 export const playGameMusic = () => {
     playMusic(gameTheme, 160, true);
+};
+
+export const playGameOverMusic = () => {
+  playMusic(gameOverTheme, 100, true);
 };
