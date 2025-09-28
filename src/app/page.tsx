@@ -8,11 +8,13 @@ import { StartScreen } from '@/components/game/start-screen';
 import { GameOverScreen } from '@/components/game/game-over-screen';
 import { WinScreen } from '@/components/game/win-screen';
 import { LevelTransitionScreen } from '@/components/game/level-transition-screen';
+import { PauseScreen } from '@/components/game/pause-screen';
 
 import type { GameObject, GameState, KeysPressed } from '@/lib/types';
 import {
   GAME_WIDTH, GAME_HEIGHT, PLAYER_WIDTH, PLAYER_HEIGHT, PLAYER_SPEED, SHOT_WIDTH, SHOT_HEIGHT, PLAYER_SHOT_SPEED, ENEMY_SHOT_SPEED, SHOT_COOLDOWN, INITIAL_LIVES, OPPONENT_WIDTH, OPPONENT_HEIGHT, PENTAGON_BOSS_WIDTH, PENTAGON_BOSS_HEIGHT, SQUARE_BOSS_WIDTH, SQUARE_BOSS_HEIGHT, BOSS_WIDTH, BOSS_HEIGHT, MAX_ROUNDS
 } from '@/lib/constants';
+import { playMenuMusic, playPauseMusic, stopMusic } from '@/lib/audio';
 
 export default function StarDefenderGame() {
   const [gameState, setGameState] = useState<GameState>('start');
@@ -145,6 +147,7 @@ export default function StarDefenderGame() {
   }, []);
 
   const startGame = useCallback(() => {
+    stopMusic();
     setScore(0);
     setLives(INITIAL_LIVES);
     setRound(1);
@@ -152,6 +155,16 @@ export default function StarDefenderGame() {
     setupRound(1);
     setGameState('playing');
   }, [setupRound]);
+
+  const togglePause = useCallback(() => {
+    if (gameState === 'playing') {
+      setGameState('paused');
+      playPauseMusic();
+    } else if (gameState === 'paused') {
+      setGameState('playing');
+      stopMusic();
+    }
+  }, [gameState]);
 
   const handleNextRound = useCallback(() => {
     setGameState('levelTransition');
@@ -164,7 +177,14 @@ export default function StarDefenderGame() {
   }, [round, setupRound]);
   
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => setKeysPressed(prev => ({...prev, [e.key.toLowerCase()]: true }));
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const key = e.key.toLowerCase();
+      if (key === 'p' || key === 'escape') {
+        togglePause();
+      } else {
+        setKeysPressed(prev => ({ ...prev, [key]: true }));
+      }
+    };
     const handleKeyUp = (e: KeyboardEvent) => setKeysPressed(prev => ({...prev, [e.key.toLowerCase()]: false }));
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('keyup', handleKeyUp);
@@ -172,7 +192,18 @@ export default function StarDefenderGame() {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, []);
+  }, [togglePause]);
+
+  useEffect(() => {
+    if (gameState === 'start') {
+      playMenuMusic();
+    } else {
+      stopMusic();
+    }
+    return () => {
+      stopMusic();
+    }
+  }, [gameState]);
 
   useEffect(() => {
     if (gameState !== 'playing') return;
@@ -300,21 +331,24 @@ export default function StarDefenderGame() {
         return <WinScreen score={score} onRestart={startGame} />;
       case 'levelTransition':
         return <LevelTransitionScreen round={round} />;
+      case 'paused':
+        return <PauseScreen onResume={togglePause} onRestart={startGame} />;
       case 'playing':
         return <GameArea player={player} playerShots={playerShots} opponents={opponents} enemyShots={enemyShots} explosions={explosions} isInvincible={isInvincible} />;
       default:
         return null;
     }
-  }, [gameState, score, startGame, player, playerShots, opponents, enemyShots, explosions, round, isInvincible]);
+  }, [gameState, score, startGame, player, playerShots, opponents, enemyShots, explosions, round, isInvincible, togglePause]);
 
   return (
     <main className="flex flex-col items-center justify-center min-h-screen p-4 overflow-hidden">
       <div className="relative" style={{ width: GAME_WIDTH, height: GAME_HEIGHT }}>
-        {(gameState === 'playing' || gameState === 'levelTransition') && <Hud score={score} lives={lives} />}
+        {(gameState === 'playing' || gameState === 'levelTransition' || gameState === 'paused') && <Hud score={score} lives={lives} />}
         {gameContent}
       </div>
       <div className="text-center mt-4 text-xs max-w-2xl text-muted-foreground font-code px-4">
         <p>Use Arrow Keys or A/D to move. Use Space, Up Arrow, or W to shoot.</p>
+        <p>Press P or Esc to pause the game.</p>
       </div>
     </main>
   );
