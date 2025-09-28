@@ -8,6 +8,7 @@ import { StartScreen } from '@/components/game/start-screen';
 import { GameOverScreen } from '@/components/game/game-over-screen';
 import { WinScreen } from '@/components/game/win-screen';
 import { LevelTransitionScreen } from '@/components/game/level-transition-screen';
+import { PauseScreen } from '@/components/game/pause-screen';
 
 import type { GameObject, GameState, KeysPressed } from '@/lib/types';
 import {
@@ -279,9 +280,36 @@ export default function StarDefenderGame() {
     }, 2000);
   }, [round, setupRound]);
   
+  const togglePause = useCallback(() => {
+    setGameState(prev => {
+      if (prev === 'playing') {
+        stopMusic();
+        playMenuMusic();
+        return 'paused';
+      }
+      if (prev === 'paused') {
+        stopMusic();
+        playGameMusic();
+        return 'playing';
+      }
+      return prev;
+    });
+  }, []);
+
+  const restartGame = useCallback(() => {
+    setGameState('start');
+  }, []);
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      setKeysPressed(prev => ({ ...prev, [e.key.toLowerCase()]: true }));
+      const key = e.key.toLowerCase();
+      if (key === 'p' || key === 'escape') {
+        if (gameState === 'playing' || gameState === 'paused') {
+          togglePause();
+        }
+      } else {
+        setKeysPressed(prev => ({ ...prev, [key]: true }));
+      }
     };
     const handleKeyUp = (e: KeyboardEvent) => setKeysPressed(prev => ({...prev, [e.key.toLowerCase()]: false }));
     window.addEventListener('keydown', handleKeyDown);
@@ -290,7 +318,7 @@ export default function StarDefenderGame() {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, []);
+  }, [gameState, togglePause]);
 
   useEffect(() => {
     if (gameState === 'start') {
@@ -302,7 +330,7 @@ export default function StarDefenderGame() {
     } else if (gameState === 'gameOver') {
       stopMusic();
       playGameOverMusic();
-    } else if (gameState === 'win') {
+    } else if (gameState === 'win' || gameState === 'paused') {
       stopMusic();
     }
     return () => {
@@ -442,23 +470,27 @@ export default function StarDefenderGame() {
         return <WinScreen score={score} onRestart={startGame} />;
       case 'levelTransition':
         return <LevelTransitionScreen round={round} />;
+      case 'paused':
+        return <PauseScreen onResume={togglePause} onRestart={restartGame} />;
       case 'playing':
         return <GameArea player={player} playerShots={playerShots} opponents={opponents} enemyShots={enemyShots} explosions={explosions} isInvincible={isInvincible} />;
       default:
         return null;
     }
-  }, [gameState, score, startGame, player, playerShots, opponents, enemyShots, explosions, round, isInvincible]);
+  }, [gameState, score, startGame, player, playerShots, opponents, enemyShots, explosions, round, isInvincible, togglePause, restartGame]);
 
   return (
     <main className="flex flex-col items-center justify-center min-h-screen p-4 overflow-hidden">
       <div className="relative" style={{ width: GAME_WIDTH, height: GAME_HEIGHT }}>
-        {(gameState === 'playing' || gameState === 'levelTransition') && <Hud score={score} lives={lives} powerUpActive={isPowerUpActive} />}
+        {(gameState === 'playing' || gameState === 'levelTransition' || gameState === 'paused') && <Hud score={score} lives={lives} powerUpActive={isPowerUpActive} />}
         {gameContent}
       </div>
       <div className="text-center mt-4 text-xs max-w-2xl text-muted-foreground font-code px-4">
-        <p>Use Arrow Keys or A/D to move. Use Space, Up Arrow, or W to shoot.</p>
+        <p>Use Arrow Keys or A/D to move. Use Space, Up Arrow, or W to shoot. P/Esc to pause.</p>
         <p className="mt-2">&copy; 2025 Hugo Rollán. All rights reserved.</p>
       </div>
     </main>
   );
 }
+
+    

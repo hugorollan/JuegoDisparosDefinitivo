@@ -10,8 +10,10 @@ export interface GameObject {
   health?: number;
 }
 
-export type GameState = 'start' | 'playing' | 'gameOver' | 'win' | 'levelTransition';
+export type GameState = 'start' | 'playing' | 'paused' | 'gameOver' | 'win' | 'levelTransition';
 
 export interface KeysPressed {
   [key: string]: boolean;
 }
+
+    
