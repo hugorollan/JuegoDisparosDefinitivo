@@ -448,7 +448,7 @@ export default function StarDefenderGame() {
       </div>
       <div className="text-center mt-4 text-xs max-w-2xl text-muted-foreground font-code px-4">
         <p>Use Arrow Keys or A/D to move. Use Space, Up Arrow, or W to shoot.</p>
-        <p className="mt-2">&copy; 2024 Hugo Rollán. All rights reserved.</p>
+        <p className="mt-2">&copy; 2025 Hugo Rollán. All rights reserved.</p>
       </div>
     </main>
   );
