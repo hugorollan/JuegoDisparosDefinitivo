@@ -372,7 +372,14 @@ export default function StarDefenderGame() {
       setOpponents(opps => opps.map(opp => {
         let newX = opp.x + (opp.dx ?? 0);
         let newDx = opp.dx ?? 2;
-        if (newX <= 0 || newX >= GAME_WIDTH - opp.width) newDx *= -1;
+        
+        // Wall bouncing
+        if (newX <= 0 || newX >= GAME_WIDTH - opp.width) {
+          newDx *= -1;
+        } else if (Math.random() < 0.02) { // Random direction change
+          newDx *= -1;
+        }
+
         if (Math.random() < 0.01 + round * 0.005) {
             setEnemyShots(shots => [...shots, {
                 id: Date.now() + Math.random(), x: opp.x + opp.width / 2 - SHOT_WIDTH / 2, y: opp.y + opp.height, width: SHOT_WIDTH, height: SHOT_HEIGHT
@@ -492,5 +499,3 @@ export default function StarDefenderGame() {
     </main>
   );
 }
-
-    
