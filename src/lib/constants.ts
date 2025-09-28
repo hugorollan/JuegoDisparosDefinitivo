@@ -13,6 +13,7 @@ export const SHOT_COOLDOWN = 200; // ms
 export const POWER_UP_SHOT_COOLDOWN = 100; // ms
 
 export const INITIAL_LIVES = 3;
+export const ROUND_TIME_LIMIT = 30; // seconds
 
 export const OPPONENT_WIDTH = 40;
 export const OPPONENT_HEIGHT = 40;

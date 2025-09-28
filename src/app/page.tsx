@@ -12,7 +12,7 @@ import { PauseScreen } from '@/components/game/pause-screen';
 
 import type { GameObject, GameState, KeysPressed } from '@/lib/types';
 import {
-  GAME_WIDTH, GAME_HEIGHT, PLAYER_WIDTH, PLAYER_HEIGHT, PLAYER_SPEED, SHOT_WIDTH, SHOT_HEIGHT, PLAYER_SHOT_SPEED, ENEMY_SHOT_SPEED, SHOT_COOLDOWN, INITIAL_LIVES, OPPONENT_WIDTH, OPPONENT_HEIGHT, PENTAGON_BOSS_WIDTH, PENTAGON_BOSS_HEIGHT, SQUARE_BOSS_WIDTH, SQUARE_BOSS_HEIGHT, BOSS_WIDTH, BOSS_HEIGHT, MAX_ROUNDS, OCTAGON_BOSS_WIDTH, OCTAGON_BOSS_HEIGHT, HEXAGON_BOSS_WIDTH, HEXAGON_BOSS_HEIGHT, POWER_UP_SHOT_COOLDOWN
+  GAME_WIDTH, GAME_HEIGHT, PLAYER_WIDTH, PLAYER_HEIGHT, PLAYER_SPEED, SHOT_WIDTH, SHOT_HEIGHT, PLAYER_SHOT_SPEED, ENEMY_SHOT_SPEED, SHOT_COOLDOWN, INITIAL_LIVES, OPPONENT_WIDTH, OPPONENT_HEIGHT, PENTAGON_BOSS_WIDTH, PENTAGON_BOSS_HEIGHT, SQUARE_BOSS_WIDTH, SQUARE_BOSS_HEIGHT, BOSS_WIDTH, BOSS_HEIGHT, MAX_ROUNDS, OCTAGON_BOSS_WIDTH, OCTAGON_BOSS_HEIGHT, HEXAGON_BOSS_WIDTH, HEXAGON_BOSS_HEIGHT, POWER_UP_SHOT_COOLDOWN, ROUND_TIME_LIMIT
 } from '@/lib/constants';
 import { playMenuMusic, stopMusic, playGameMusic, playGameOverMusic } from '@/lib/audio';
 
@@ -22,6 +22,7 @@ export default function StarDefenderGame() {
   const [lives, setLives] = useState(INITIAL_LIVES);
   const [round, setRound] = useState(1);
   const [level, setLevel] = useState(1);
+  const [timeLeft, setTimeLeft] = useState(ROUND_TIME_LIMIT);
   const [keysPressed, setKeysPressed] = useState<KeysPressed>({});
   
   const [player, setPlayer] = useState<GameObject>({ id: 0, x: GAME_WIDTH / 2 - PLAYER_WIDTH / 2, y: GAME_HEIGHT - PLAYER_HEIGHT - 20, width: PLAYER_WIDTH, height: PLAYER_HEIGHT });
@@ -175,6 +176,7 @@ export default function StarDefenderGame() {
     setPlayerShots([]);
     setEnemyShots([]);
     setExplosions([]);
+    setTimeLeft(ROUND_TIME_LIMIT);
 
     if (currentRound === MAX_ROUNDS && lives === INITIAL_LIVES) {
       setIsPowerUpActive(true);
@@ -343,6 +345,25 @@ export default function StarDefenderGame() {
   useEffect(() => {
     if (gameState !== 'playing') return;
 
+    const timerId = setInterval(() => {
+      setTimeLeft(prev => {
+        if (prev <= 1) {
+          setLives(l => l - 1);
+          playPlayerHitSound();
+          setIsInvincible(true);
+          setTimeout(() => setIsInvincible(false), 1500);
+          return ROUND_TIME_LIMIT;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timerId);
+  }, [gameState, playPlayerHitSound]);
+
+  useEffect(() => {
+    if (gameState !== 'playing') return;
+
     let animationFrameId: number;
 
     const gameLoop = () => {
@@ -404,6 +425,7 @@ export default function StarDefenderGame() {
             if (newHealth <= 0) {
               updatedOpponents.splice(oppIndex, 1);
               setScore(s => s + 100);
+              setTimeLeft(ROUND_TIME_LIMIT);
               const explosion = { id: opp.id, x: opp.x, y: opp.y, width: opp.width, height: opp.height };
               setExplosions(ex => [...ex, explosion]);
               playExplosionSound();
@@ -489,7 +511,7 @@ export default function StarDefenderGame() {
   return (
     <main className="flex flex-col items-center justify-center min-h-screen p-4 overflow-hidden">
       <div className="relative" style={{ width: GAME_WIDTH, height: GAME_HEIGHT }}>
-        {(gameState === 'playing' || gameState === 'levelTransition' || gameState === 'paused') && <Hud score={score} lives={lives} powerUpActive={isPowerUpActive} />}
+        {(gameState === 'playing' || gameState === 'levelTransition' || gameState === 'paused') && <Hud score={score} lives={lives} timeLeft={timeLeft} powerUpActive={isPowerUpActive} />}
         {gameContent}
       </div>
       <div className="text-center mt-4 text-xs max-w-2xl text-muted-foreground font-code px-4">
