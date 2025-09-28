@@ -1,8 +1,6 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import type { AdjustDifficultyInput, AdjustDifficultyOutput } from '@/ai/flows/adjust-difficulty';
-import { adjustDifficulty } from '@/ai/flows/adjust-difficulty';
 
 import { GameArea } from '@/components/game/game-area';
 import { Hud } from '@/components/game/hud';
@@ -31,7 +29,6 @@ export default function StarDefenderGame() {
   const [explosions, setExplosions] = useState<GameObject[]>([]);
 
   const [lastShotTime, setLastShotTime] = useState(0);
-  const [aiExplanation, setAiExplanation] = useState('');
   const [isInvincible, setIsInvincible] = useState(false);
 
   const setupRound = useCallback((currentRound: number, currentLevel: number) => {
@@ -72,35 +69,18 @@ export default function StarDefenderGame() {
     setLevel(1);
     setupRound(1, 1);
     setGameState('playing');
-    setAiExplanation('');
   }, [setupRound]);
 
-  const handleLevelTransition = useCallback(async () => {
+  const handleLevelTransition = useCallback(() => {
     setGameState('levelTransition');
-    const aiInput: AdjustDifficultyInput = { score, lives, round, level };
-    try {
-      const aiOutput: AdjustDifficultyOutput = await adjustDifficulty(aiInput);
-      const newLevel = Math.max(1, Math.min(10, aiOutput.newLevel));
-      setLevel(newLevel);
-      setAiExplanation(aiOutput.explanation);
-      const nextRound = round + 1;
-      setRound(nextRound);
-      setTimeout(() => {
-        setupRound(nextRound, newLevel);
-        setGameState('playing');
-      }, 4000);
-    } catch (error) {
-      console.error("AI difficulty adjustment failed:", error);
-      const newLevel = level; // Keep same level on error
-      setAiExplanation("Error adjusting difficulty. Continuing at current level.");
-      const nextRound = round + 1;
-      setRound(nextRound);
-      setTimeout(() => {
-        setupRound(nextRound, newLevel);
-        setGameState('playing');
-      }, 4000);
-    }
-  }, [score, lives, round, level, setupRound]);
+    const newLevel = level; // Keep same level
+    const nextRound = round + 1;
+    setRound(nextRound);
+    setTimeout(() => {
+      setupRound(nextRound, newLevel);
+      setGameState('playing');
+    }, 2000);
+  }, [round, level, setupRound]);
   
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => setKeysPressed(prev => ({...prev, [e.key.toLowerCase()]: true }));
@@ -228,13 +208,13 @@ export default function StarDefenderGame() {
       case 'win':
         return <WinScreen score={score} onRestart={startGame} />;
       case 'levelTransition':
-        return <LevelTransitionScreen round={round} explanation={aiExplanation} />;
+        return <LevelTransitionScreen round={round} />;
       case 'playing':
         return <GameArea player={player} playerShots={playerShots} opponents={opponents} enemyShots={enemyShots} explosions={explosions} isInvincible={isInvincible} />;
       default:
         return null;
     }
-  }, [gameState, score, startGame, player, playerShots, opponents, enemyShots, explosions, round, aiExplanation, isInvincible]);
+  }, [gameState, score, startGame, player, playerShots, opponents, enemyShots, explosions, round, isInvincible]);
 
   return (
     <main className="flex flex-col items-center justify-center min-h-screen p-4 overflow-hidden">
@@ -244,7 +224,6 @@ export default function StarDefenderGame() {
       </div>
       <div className="text-center mt-4 text-xs max-w-2xl text-muted-foreground font-code px-4">
         <p>Use Arrow Keys or A/D to move. Use Space, Up Arrow, or W to shoot.</p>
-        {aiExplanation && gameState === 'playing' && <p className="mt-2 text-accent animate-pulse">AI Adjustment: {aiExplanation}</p>}
       </div>
     </main>
   );
