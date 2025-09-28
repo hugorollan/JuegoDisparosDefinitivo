@@ -59,6 +59,32 @@ export default function StarDefenderGame() {
     oscillator.stop(audioContext.currentTime + 0.1);
   }, []);
 
+  const playExplosionSound = useCallback(() => {
+    if (!audioContextRef.current) {
+      if (typeof window !== 'undefined' && (window.AudioContext || (window as any).webkitAudioContext)) {
+          audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+      }
+    }
+    const audioContext = audioContextRef.current;
+    if (!audioContext) return;
+  
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+  
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+  
+    oscillator.type = 'triangle';
+    oscillator.frequency.setValueAtTime(200, audioContext.currentTime);
+    oscillator.frequency.exponentialRampToValueAtTime(50, audioContext.currentTime + 0.2);
+  
+    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.0001, audioContext.currentTime + 0.2);
+  
+    oscillator.start(audioContext.currentTime);
+    oscillator.stop(audioContext.currentTime + 0.2);
+  }, []);
+
   const setupRound = useCallback((currentRound: number) => {
     setPlayer({ id: 0, x: GAME_WIDTH / 2 - PLAYER_WIDTH / 2, y: GAME_HEIGHT - PLAYER_HEIGHT - 20, width: PLAYER_WIDTH, height: PLAYER_HEIGHT });
     setPlayerShots([]);
@@ -205,6 +231,7 @@ export default function StarDefenderGame() {
               setScore(s => s + 100);
               const explosion = { id: opp.id, x: opp.x, y: opp.y, width: opp.width, height: opp.height };
               setExplosions(ex => [...ex, explosion]);
+              playExplosionSound();
               setTimeout(() => setExplosions(ex => ex.filter(e => e.id !== explosion.id)), 300);
             } else {
               updatedOpponents[oppIndex] = { ...opp, health: newHealth };
@@ -245,7 +272,7 @@ export default function StarDefenderGame() {
     animationFrameId = requestAnimationFrame(gameLoop);
     return () => cancelAnimationFrame(animationFrameId);
 
-  }, [gameState, keysPressed, player.x, player.y, lastShotTime, opponents, playerShots, enemyShots, isInvincible, round, playShotSound]);
+  }, [gameState, keysPressed, player.x, player.y, lastShotTime, opponents, playerShots, enemyShots, isInvincible, round, playShotSound, playExplosionSound]);
 
   useEffect(() => {
     if (gameState === 'playing' && lives <= 0) {
