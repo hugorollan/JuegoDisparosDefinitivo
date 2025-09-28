@@ -13,7 +13,7 @@ import type { GameObject, GameState, KeysPressed } from '@/lib/types';
 import {
   GAME_WIDTH, GAME_HEIGHT, PLAYER_WIDTH, PLAYER_HEIGHT, PLAYER_SPEED, SHOT_WIDTH, SHOT_HEIGHT, PLAYER_SHOT_SPEED, ENEMY_SHOT_SPEED, SHOT_COOLDOWN, INITIAL_LIVES, OPPONENT_WIDTH, OPPONENT_HEIGHT, PENTAGON_BOSS_WIDTH, PENTAGON_BOSS_HEIGHT, SQUARE_BOSS_WIDTH, SQUARE_BOSS_HEIGHT, BOSS_WIDTH, BOSS_HEIGHT, MAX_ROUNDS
 } from '@/lib/constants';
-import { playMenuMusic, stopMusic } from '@/lib/audio';
+import { playMenuMusic, stopMusic, playGameMusic } from '@/lib/audio';
 
 export default function StarDefenderGame() {
   const [gameState, setGameState] = useState<GameState>('start');
@@ -180,12 +180,18 @@ export default function StarDefenderGame() {
 
   useEffect(() => {
     if (gameState === 'start') {
+      stopMusic();
       playMenuMusic();
-    } else {
+    } else if (gameState === 'playing') {
+      stopMusic();
+      playGameMusic();
+    } else if (gameState === 'gameOver' || gameState === 'win') {
       stopMusic();
     }
     return () => {
-      stopMusic();
+      if (gameState !== 'start' && gameState !== 'playing') {
+        stopMusic();
+      }
     }
   }, [gameState]);
 

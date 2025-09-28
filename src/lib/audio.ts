@@ -33,6 +33,7 @@ const playMusic = (notes: { freq: number, duration: number, delay: number }[], t
   const noteDuration = 60 / tempo;
 
   notes.forEach(note => {
+    if (!musicGainNode) return;
     const oscillator = context.createOscillator();
     const gain = context.createGain();
     oscillator.connect(gain);
@@ -69,6 +70,7 @@ export const stopMusic = () => {
     musicSource.stop(0);
     musicSource.disconnect();
     musicSource = null;
+    musicGainNode = null;
   }
   musicPlaying = false;
 };
@@ -82,7 +84,24 @@ const menuTheme = [
   { freq: 392.00, duration: 0.5, delay: 4 }, { freq: 329.63, duration: 0.5, delay: 4.5 }, { freq: 349.23, duration: 1, delay: 5 },
 ];
 
+const gameTheme = [
+  // Bassline
+  { freq: 130.81, duration: 0.25, delay: 0 }, { freq: 130.81, duration: 0.25, delay: 0.5 },
+  { freq: 130.81, duration: 0.25, delay: 1 }, { freq: 130.81, duration: 0.25, delay: 1.5 },
+  { freq: 146.83, duration: 0.25, delay: 2 }, { freq: 146.83, duration: 0.25, delay: 2.5 },
+  { freq: 164.81, duration: 0.25, delay: 3 }, { freq: 164.81, duration: 0.25, delay: 3.5 },
+
+  // Melody
+  { freq: 261.63, duration: 0.25, delay: 0 }, { freq: 293.66, duration: 0.25, delay: 0.25 }, { freq: 329.63, duration: 0.5, delay: 0.5 },
+  { freq: 261.63, duration: 0.25, delay: 1.5 }, { freq: 293.66, duration: 0.25, delay: 1.75 }, { freq: 329.63, duration: 0.25, delay: 2.0 },
+  { freq: 349.23, duration: 0.5, delay: 2.5 }, { freq: 329.63, duration: 0.5, delay: 3.0 },
+];
+
 
 export const playMenuMusic = () => {
   playMusic(menuTheme, 140, true);
+};
+
+export const playGameMusic = () => {
+    playMusic(gameTheme, 160, true);
 };
