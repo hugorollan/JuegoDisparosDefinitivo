@@ -10,6 +10,7 @@ export const SHOT_HEIGHT = 15;
 export const PLAYER_SHOT_SPEED = 10;
 export const ENEMY_SHOT_SPEED = 5;
 export const SHOT_COOLDOWN = 200; // ms
+export const POWER_UP_SHOT_COOLDOWN = 100; // ms
 
 export const INITIAL_LIVES = 3;
 

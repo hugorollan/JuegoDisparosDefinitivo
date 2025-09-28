@@ -11,7 +11,7 @@ import { LevelTransitionScreen } from '@/components/game/level-transition-screen
 
 import type { GameObject, GameState, KeysPressed } from '@/lib/types';
 import {
-  GAME_WIDTH, GAME_HEIGHT, PLAYER_WIDTH, PLAYER_HEIGHT, PLAYER_SPEED, SHOT_WIDTH, SHOT_HEIGHT, PLAYER_SHOT_SPEED, ENEMY_SHOT_SPEED, SHOT_COOLDOWN, INITIAL_LIVES, OPPONENT_WIDTH, OPPONENT_HEIGHT, PENTAGON_BOSS_WIDTH, PENTAGON_BOSS_HEIGHT, SQUARE_BOSS_WIDTH, SQUARE_BOSS_HEIGHT, BOSS_WIDTH, BOSS_HEIGHT, MAX_ROUNDS, OCTAGON_BOSS_WIDTH, OCTAGON_BOSS_HEIGHT, HEXAGON_BOSS_WIDTH, HEXAGON_BOSS_HEIGHT
+  GAME_WIDTH, GAME_HEIGHT, PLAYER_WIDTH, PLAYER_HEIGHT, PLAYER_SPEED, SHOT_WIDTH, SHOT_HEIGHT, PLAYER_SHOT_SPEED, ENEMY_SHOT_SPEED, SHOT_COOLDOWN, INITIAL_LIVES, OPPONENT_WIDTH, OPPONENT_HEIGHT, PENTAGON_BOSS_WIDTH, PENTAGON_BOSS_HEIGHT, SQUARE_BOSS_WIDTH, SQUARE_BOSS_HEIGHT, BOSS_WIDTH, BOSS_HEIGHT, MAX_ROUNDS, OCTAGON_BOSS_WIDTH, OCTAGON_BOSS_HEIGHT, HEXAGON_BOSS_WIDTH, HEXAGON_BOSS_HEIGHT, POWER_UP_SHOT_COOLDOWN
 } from '@/lib/constants';
 import { playMenuMusic, stopMusic, playGameMusic, playGameOverMusic } from '@/lib/audio';
 
@@ -31,6 +31,7 @@ export default function StarDefenderGame() {
 
   const [lastShotTime, setLastShotTime] = useState(0);
   const [isInvincible, setIsInvincible] = useState(false);
+  const [isPowerUpActive, setIsPowerUpActive] = useState(false);
   
   const audioContextRef = useRef<AudioContext | null>(null);
 
@@ -174,6 +175,12 @@ export default function StarDefenderGame() {
     setEnemyShots([]);
     setExplosions([]);
 
+    if (currentRound === MAX_ROUNDS && lives === INITIAL_LIVES) {
+      setIsPowerUpActive(true);
+    } else {
+      setIsPowerUpActive(false);
+    }
+
     let newOpponents: GameObject[] = [];
     if (currentRound === 1) {
       newOpponents = [{
@@ -249,7 +256,7 @@ export default function StarDefenderGame() {
       }];
     }
     setOpponents(newOpponents);
-  }, []);
+  }, [lives]);
 
   const startGame = useCallback(() => {
     stopMusic();
@@ -257,6 +264,7 @@ export default function StarDefenderGame() {
     setLives(INITIAL_LIVES);
     setRound(1);
     setLevel(1);
+    setIsPowerUpActive(false);
     setupRound(1);
     setGameState('playing');
   }, [setupRound]);
@@ -320,7 +328,8 @@ export default function StarDefenderGame() {
 
       // Player shooting
       const now = Date.now();
-      if ((keysPressed[' '] || keysPressed['arrowup'] || keysPressed['w']) && now - lastShotTime > SHOT_COOLDOWN) {
+      const currentShotCooldown = isPowerUpActive ? POWER_UP_SHOT_COOLDOWN : SHOT_COOLDOWN;
+      if ((keysPressed[' '] || keysPressed['arrowup'] || keysPressed['w']) && now - lastShotTime > currentShotCooldown) {
         setPlayerShots(shots => [...shots, {
           id: now, x: player.x + player.width / 2 - SHOT_WIDTH / 2, y: player.y, width: SHOT_WIDTH, height: SHOT_HEIGHT
         }]);
@@ -404,7 +413,7 @@ export default function StarDefenderGame() {
     animationFrameId = requestAnimationFrame(gameLoop);
     return () => cancelAnimationFrame(animationFrameId);
 
-  }, [gameState, keysPressed, player.x, player.y, lastShotTime, opponents, playerShots, enemyShots, isInvincible, round, playShotSound, playExplosionSound, playEnemyShotSound, playPlayerHitSound]);
+  }, [gameState, keysPressed, player.x, player.y, lastShotTime, opponents, playerShots, enemyShots, isInvincible, round, playShotSound, playExplosionSound, playEnemyShotSound, playPlayerHitSound, isPowerUpActive]);
 
   useEffect(() => {
     if (gameState === 'playing' && lives <= 0) {
@@ -443,7 +452,7 @@ export default function StarDefenderGame() {
   return (
     <main className="flex flex-col items-center justify-center min-h-screen p-4 overflow-hidden">
       <div className="relative" style={{ width: GAME_WIDTH, height: GAME_HEIGHT }}>
-        {(gameState === 'playing' || gameState === 'levelTransition') && <Hud score={score} lives={lives} />}
+        {(gameState === 'playing' || gameState === 'levelTransition') && <Hud score={score} lives={lives} powerUpActive={isPowerUpActive} />}
         {gameContent}
       </div>
       <div className="text-center mt-4 text-xs max-w-2xl text-muted-foreground font-code px-4">
