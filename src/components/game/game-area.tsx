@@ -1,0 +1,55 @@
+"use client";
+
+import type { GameObject } from '@/lib/types';
+import { PlayerIcon, TriangleOpponentIcon, PentagonOpponentIcon } from '@/components/game-icons';
+import { GAME_WIDTH, GAME_HEIGHT } from '@/lib/constants';
+import { cn } from '@/lib/utils';
+
+interface GameAreaProps {
+  player: GameObject;
+  playerShots: GameObject[];
+  opponents: GameObject[];
+  enemyShots: GameObject[];
+  explosions: GameObject[];
+  isInvincible: boolean;
+}
+
+const Explosion = ({ x, y, width }: { x: number; y: number; width: number; }) => {
+    return (
+        <div style={{ left: x, top: y, width, height: width }} className="absolute">
+            <div className="absolute inset-0 animate-ping rounded-full bg-primary" />
+            <div className="absolute inset-0 animate-ping rounded-full bg-accent [animation-delay:0.1s]" />
+        </div>
+    );
+};
+
+export function GameArea({ player, playerShots, opponents, enemyShots, explosions, isInvincible }: GameAreaProps) {
+  return (
+    <div
+      className="relative bg-black border-2 border-primary shadow-[0_0_15px] shadow-primary/50 overflow-hidden"
+      style={{ width: GAME_WIDTH, height: GAME_HEIGHT }}
+    >
+      <div className={cn('text-accent transition-opacity duration-150', isInvincible && 'animate-pulse opacity-50')} style={{ position: 'absolute', left: player.x, top: player.y, width: player.width, height: player.height }}>
+        <PlayerIcon />
+      </div>
+
+      {playerShots.map(shot => (
+        <div key={shot.id} className="bg-accent shadow-[0_0_8px] shadow-accent" style={{ position: 'absolute', left: shot.x, top: shot.y, width: shot.width, height: shot.height, borderRadius: '2px' }} />
+      ))}
+
+      {opponents.map(opp => (
+        <div key={opp.id} className="text-primary" style={{ position: 'absolute', left: opp.x, top: opp.y, width: opp.width, height: opp.height }}>
+          {opp.type === 'pentagon' ? <PentagonOpponentIcon /> : <TriangleOpponentIcon />}
+        </div>
+      ))}
+
+      {enemyShots.map(shot => (
+        <div key={shot.id} className="bg-primary shadow-[0_0_8px] shadow-primary" style={{ position: 'absolute', left: shot.x, top: shot.y, width: shot.width, height: shot.height, borderRadius: '2px' }} />
+      ))}
+
+      {explosions.map(exp => (
+        <Explosion key={exp.id} x={exp.x} y={exp.y} width={exp.width} />
+      ))}
+    </div>
+  );
+}
