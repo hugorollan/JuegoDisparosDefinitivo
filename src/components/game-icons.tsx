@@ -2,7 +2,8 @@ import type { SVGProps } from 'react';
 
 export const PlayerIcon = (props: SVGProps<SVGSVGElement>) => (
   <svg viewBox="0 0 20 20" fill="currentColor" {...props}>
-    <path d="M10 2 L2 18 L18 18 Z" />
+    <path d="M 2.5,12 C 2.5,9.5 6,8 10,8 C 14,8 17.5,9.5 17.5,12 C 17.5,14.5 14,16 10,16 C 6,16 2.5,14.5 2.5,12 Z" />
+    <path d="M 7,8 A 3,3.5 0 0 1 13,8 Z" stroke="hsl(var(--background))" strokeWidth="1.5" />
   </svg>
 );
 
