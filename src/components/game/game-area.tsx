@@ -1,7 +1,7 @@
 "use client";
 
-import type { GameObject } from '@/lib/types';
-import { PlayerIcon, TriangleOpponentIcon, PentagonOpponentIcon, SquareOpponentIcon, BossIcon, OctagonOpponentIcon, HexagonOpponentIcon } from '@/components/game-icons';
+import type { GameObject, PowerUpType } from '@/lib/types';
+import { PlayerIcon, TriangleOpponentIcon, PentagonOpponentIcon, SquareOpponentIcon, BossIcon, OctagonOpponentIcon, HexagonOpponentIcon, ExtraLifeIcon, FastShotIcon, ShieldIcon } from '@/components/game-icons';
 import { GAME_WIDTH, GAME_HEIGHT } from '@/lib/constants';
 import { cn } from '@/lib/utils';
 
@@ -11,6 +11,7 @@ interface GameAreaProps {
   opponents: GameObject[];
   enemyShots: GameObject[];
   explosions: GameObject[];
+  powerUps: GameObject[];
   isInvincible: boolean;
 }
 
@@ -35,7 +36,24 @@ const HealthBar = ({ health, maxHealth }: { health: number; maxHealth: number })
     );
 };
 
-export function GameArea({ player, playerShots, opponents, enemyShots, explosions, isInvincible }: GameAreaProps) {
+const PowerUp = ({ powerUp }: { powerUp: GameObject }) => {
+    const iconMap: Record<PowerUpType, React.ReactNode> = {
+        'EXTRA_LIFE': <ExtraLifeIcon className="text-accent" />,
+        'FAST_SHOT': <FastShotIcon className="text-yellow-400" />,
+        'SHIELD': <ShieldIcon className="text-blue-400" />,
+    };
+
+    return (
+        <div 
+            className="animate-pulse"
+            style={{ position: 'absolute', left: powerUp.x, top: powerUp.y, width: powerUp.width, height: powerUp.height }}
+        >
+            {iconMap[powerUp.type as PowerUpType]}
+        </div>
+    );
+};
+
+export function GameArea({ player, playerShots, opponents, enemyShots, explosions, powerUps, isInvincible }: GameAreaProps) {
   return (
     <div
       className="relative bg-black border-2 border-primary shadow-[0_0_15px] shadow-primary/50 overflow-hidden"
@@ -43,6 +61,9 @@ export function GameArea({ player, playerShots, opponents, enemyShots, explosion
     >
       <div className={cn('text-accent transition-opacity duration-150', isInvincible && 'animate-pulse opacity-50')} style={{ position: 'absolute', left: player.x, top: player.y, width: player.width, height: player.height }}>
         <PlayerIcon />
+         {isInvincible && (
+            <div className="absolute -inset-1.5 rounded-full border-2 border-blue-400 animate-pulse" />
+        )}
       </div>
 
       {playerShots.map(shot => (
@@ -76,6 +97,10 @@ export function GameArea({ player, playerShots, opponents, enemyShots, explosion
 
       {explosions.map(exp => (
         <Explosion key={exp.id} x={exp.x} y={exp.y} width={exp.width} />
+      ))}
+
+      {powerUps.map(powerUp => (
+          <PowerUp key={powerUp.id} powerUp={powerUp} />
       ))}
     </div>
   );

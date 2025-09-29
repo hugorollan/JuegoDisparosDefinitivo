@@ -10,9 +10,9 @@ import { WinScreen } from '@/components/game/win-screen';
 import { LevelTransitionScreen } from '@/components/game/level-transition-screen';
 import { PauseScreen } from '@/components/game/pause-screen';
 
-import type { GameObject, GameState, KeysPressed } from '@/lib/types';
+import type { GameObject, GameState, KeysPressed, PowerUpType } from '@/lib/types';
 import {
-  GAME_WIDTH, GAME_HEIGHT, PLAYER_WIDTH, PLAYER_HEIGHT, PLAYER_SPEED, SHOT_WIDTH, SHOT_HEIGHT, PLAYER_SHOT_SPEED, ENEMY_SHOT_SPEED, SHOT_COOLDOWN, INITIAL_LIVES, OPPONENT_WIDTH, OPPONENT_HEIGHT, PENTAGON_BOSS_WIDTH, PENTAGON_BOSS_HEIGHT, SQUARE_BOSS_WIDTH, SQUARE_BOSS_HEIGHT, BOSS_WIDTH, BOSS_HEIGHT, MAX_ROUNDS, OCTAGON_BOSS_WIDTH, OCTAGON_BOSS_HEIGHT, HEXAGON_BOSS_WIDTH, HEXAGON_BOSS_HEIGHT, POWER_UP_SHOT_COOLDOWN, ROUND_TIME_LIMIT
+  GAME_WIDTH, GAME_HEIGHT, PLAYER_WIDTH, PLAYER_HEIGHT, PLAYER_SPEED, SHOT_WIDTH, SHOT_HEIGHT, PLAYER_SHOT_SPEED, ENEMY_SHOT_SPEED, SHOT_COOLDOWN, INITIAL_LIVES, OPPONENT_WIDTH, OPPONENT_HEIGHT, PENTAGON_BOSS_WIDTH, PENTAGON_BOSS_HEIGHT, SQUARE_BOSS_WIDTH, SQUARE_BOSS_HEIGHT, BOSS_WIDTH, BOSS_HEIGHT, MAX_ROUNDS, OCTAGON_BOSS_WIDTH, OCTAGON_BOSS_HEIGHT, HEXAGON_BOSS_WIDTH, HEXAGON_BOSS_HEIGHT, POWER_UP_SHOT_COOLDOWN, ROUND_TIME_LIMIT, POWER_UP_DROP_CHANCE, POWER_UP_WIDTH, POWER_UP_HEIGHT, POWER_UP_SPEED, FAST_SHOT_DURATION, SHIELD_DURATION
 } from '@/lib/constants';
 import { playMenuMusic, stopMusic, playGameMusic, playGameOverMusic } from '@/lib/audio';
 
@@ -30,11 +30,15 @@ export default function StarDefenderGame() {
   const [opponents, setOpponents] = useState<GameObject[]>([]);
   const [enemyShots, setEnemyShots] = useState<GameObject[]>([]);
   const [explosions, setExplosions] = useState<GameObject[]>([]);
+  const [powerUps, setPowerUps] = useState<GameObject[]>([]);
 
   const [lastShotTime, setLastShotTime] = useState(0);
   const [isInvincible, setIsInvincible] = useState(false);
   const [isPowerUpActive, setIsPowerUpActive] = useState(false);
   
+  const [fastShotTimeout, setFastShotTimeout] = useState<NodeJS.Timeout | null>(null);
+  const [shieldTimeout, setShieldTimeout] = useState<NodeJS.Timeout | null>(null);
+
   const audioContextRef = useRef<AudioContext | null>(null);
 
   const playShotSound = useCallback(() => {
@@ -141,6 +145,28 @@ export default function StarDefenderGame() {
     oscillator.stop(audioContext.currentTime + 0.3);
   }, []);
 
+  const playPowerUpSound = useCallback(() => {
+    if (!audioContextRef.current) {
+        if (typeof window !== 'undefined' && (window.AudioContext || (window as any).webkitAudioContext)) {
+            audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+        }
+    }
+    const audioContext = audioContextRef.current;
+    if (!audioContext) return;
+
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    oscillator.type = 'triangle';
+    oscillator.frequency.setValueAtTime(523.25, audioContext.currentTime);
+    oscillator.frequency.linearRampToValueAtTime(1046.50, audioContext.currentTime + 0.2);
+    gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.0001, audioContext.currentTime + 0.2);
+    oscillator.start(audioContext.currentTime);
+    oscillator.stop(audioContext.currentTime + 0.2);
+  }, []);
+
   const playGameOverSound = useCallback(() => {
     if (!audioContextRef.current) {
       if (typeof window !== 'undefined' && (window.AudioContext || (window as any).webkitAudioContext)) {
@@ -171,12 +197,23 @@ export default function StarDefenderGame() {
     });
   }, []);
 
+  const resetPowerUps = useCallback(() => {
+    setIsPowerUpActive(false);
+    setIsInvincible(false);
+    if (fastShotTimeout) clearTimeout(fastShotTimeout);
+    if (shieldTimeout) clearTimeout(shieldTimeout);
+    setFastShotTimeout(null);
+    setShieldTimeout(null);
+    setPowerUps([]);
+  }, [fastShotTimeout, shieldTimeout]);
+
   const setupRound = useCallback((currentRound: number) => {
     setPlayer({ id: 0, x: GAME_WIDTH / 2 - PLAYER_WIDTH / 2, y: GAME_HEIGHT - PLAYER_HEIGHT - 20, width: PLAYER_WIDTH, height: PLAYER_HEIGHT });
     setPlayerShots([]);
     setEnemyShots([]);
     setExplosions([]);
     setTimeLeft(ROUND_TIME_LIMIT);
+    resetPowerUps();
 
     if (currentRound === MAX_ROUNDS && lives === INITIAL_LIVES) {
       setIsPowerUpActive(true);
@@ -259,7 +296,7 @@ export default function StarDefenderGame() {
       }];
     }
     setOpponents(newOpponents);
-  }, [lives]);
+  }, [lives, resetPowerUps]);
 
   const startGame = useCallback(() => {
     stopMusic();
@@ -267,7 +304,6 @@ export default function StarDefenderGame() {
     setLives(INITIAL_LIVES);
     setRound(1);
     setLevel(1);
-    setIsPowerUpActive(false);
     setupRound(1);
     setGameState('playing');
   }, [setupRound]);
@@ -301,6 +337,42 @@ export default function StarDefenderGame() {
   const restartGame = useCallback(() => {
     setGameState('start');
   }, []);
+
+  const spawnPowerUp = (x: number, y: number) => {
+    if (Math.random() > POWER_UP_DROP_CHANCE) return;
+
+    const powerUpTypes: PowerUpType[] = ['EXTRA_LIFE', 'FAST_SHOT', 'SHIELD'];
+    const type = powerUpTypes[Math.floor(Math.random() * powerUpTypes.length)];
+
+    setPowerUps(currentPowerUps => [
+      ...currentPowerUps,
+      {
+        id: Date.now(),
+        type,
+        x: x,
+        y: y,
+        width: POWER_UP_WIDTH,
+        height: POWER_UP_HEIGHT,
+      },
+    ]);
+  };
+  
+  const activatePowerUp = (type: PowerUpType) => {
+    playPowerUpSound();
+    if (type === 'EXTRA_LIFE') {
+      setLives(l => Math.min(INITIAL_LIVES, l + 1));
+    } else if (type === 'FAST_SHOT') {
+      setIsPowerUpActive(true);
+      if (fastShotTimeout) clearTimeout(fastShotTimeout);
+      const timeout = setTimeout(() => setIsPowerUpActive(false), FAST_SHOT_DURATION);
+      setFastShotTimeout(timeout);
+    } else if (type === 'SHIELD') {
+      setIsInvincible(true);
+      if (shieldTimeout) clearTimeout(shieldTimeout);
+      const timeout = setTimeout(() => setIsInvincible(false), SHIELD_DURATION);
+      setShieldTimeout(timeout);
+    }
+  };
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -348,10 +420,12 @@ export default function StarDefenderGame() {
     const timerId = setInterval(() => {
       setTimeLeft(prev => {
         if (prev <= 1) {
-          setLives(l => l - 1);
-          playPlayerHitSound();
-          setIsInvincible(true);
-          setTimeout(() => setIsInvincible(false), 1500);
+          if (!isInvincible) {
+            setLives(l => l - 1);
+            playPlayerHitSound();
+            setIsInvincible(true);
+            setTimeout(() => setIsInvincible(false), 1500);
+          }
           return ROUND_TIME_LIMIT;
         }
         return prev - 1;
@@ -359,7 +433,7 @@ export default function StarDefenderGame() {
     }, 1000);
 
     return () => clearInterval(timerId);
-  }, [gameState, playPlayerHitSound]);
+  }, [gameState, playPlayerHitSound, isInvincible]);
 
   useEffect(() => {
     if (gameState !== 'playing') return;
@@ -389,6 +463,7 @@ export default function StarDefenderGame() {
       // Update positions
       setPlayerShots(shots => shots.map(s => ({...s, y: s.y - PLAYER_SHOT_SPEED})).filter(s => s.y > -s.height));
       setEnemyShots(shots => shots.map(s => ({...s, y: s.y + ENEMY_SHOT_SPEED})).filter(s => s.y < GAME_HEIGHT));
+      setPowerUps(pus => pus.map(p => ({ ...p, y: p.y + POWER_UP_SPEED })).filter(p => p.y < GAME_HEIGHT));
       
       setOpponents(opps => opps.map(opp => {
         let newX = opp.x + (opp.dx ?? 0);
@@ -423,11 +498,12 @@ export default function StarDefenderGame() {
             const newHealth = (opp.health ?? 1) - 1;
 
             if (newHealth <= 0) {
-              updatedOpponents.splice(oppIndex, 1);
+              const destroyedOpp = updatedOpponents.splice(oppIndex, 1)[0];
               setScore(s => s + 100);
               setTimeLeft(ROUND_TIME_LIMIT);
-              const explosion = { id: opp.id, x: opp.x, y: opp.y, width: opp.width, height: opp.height };
+              const explosion = { id: destroyedOpp.id, x: destroyedOpp.x, y: destroyedOpp.y, width: destroyedOpp.width, height: destroyedOpp.height };
               setExplosions(ex => [...ex, explosion]);
+              spawnPowerUp(destroyedOpp.x + destroyedOpp.width / 2, destroyedOpp.y + destroyedOpp.height / 2);
               playExplosionSound();
               setTimeout(() => setExplosions(ex => ex.filter(e => e.id !== explosion.id)), 300);
             } else {
@@ -464,13 +540,30 @@ export default function StarDefenderGame() {
         setEnemyShots(shots => shots.filter(s => !hitEnemyShotIds.has(s.id)));
       }
 
+      const collectedPowerUpIds = new Set();
+      powerUps.forEach(powerUp => {
+        if (
+          powerUp.x < player.x + player.width &&
+          powerUp.x + powerUp.width > player.x &&
+          powerUp.y < player.y + player.height &&
+          powerUp.y + powerUp.height > player.y
+        ) {
+          activatePowerUp(powerUp.type as PowerUpType);
+          collectedPowerUpIds.add(powerUp.id);
+        }
+      });
+
+      if (collectedPowerUpIds.size > 0) {
+        setPowerUps(pus => pus.filter(p => !collectedPowerUpIds.has(p.id)));
+      }
+
       animationFrameId = requestAnimationFrame(gameLoop);
     };
     
     animationFrameId = requestAnimationFrame(gameLoop);
     return () => cancelAnimationFrame(animationFrameId);
 
-  }, [gameState, keysPressed, player.x, player.y, lastShotTime, opponents, playerShots, enemyShots, isInvincible, round, playShotSound, playExplosionSound, playEnemyShotSound, playPlayerHitSound, isPowerUpActive]);
+  }, [gameState, keysPressed, player.x, player.y, lastShotTime, opponents, playerShots, enemyShots, isInvincible, round, playShotSound, playExplosionSound, playEnemyShotSound, playPlayerHitSound, isPowerUpActive, powerUps, playPowerUpSound]);
 
   useEffect(() => {
     if (gameState === 'playing' && lives <= 0) {
@@ -502,16 +595,16 @@ export default function StarDefenderGame() {
       case 'paused':
         return <PauseScreen onResume={togglePause} onRestart={restartGame} />;
       case 'playing':
-        return <GameArea player={player} playerShots={playerShots} opponents={opponents} enemyShots={enemyShots} explosions={explosions} isInvincible={isInvincible} />;
+        return <GameArea player={player} playerShots={playerShots} opponents={opponents} enemyShots={enemyShots} explosions={explosions} powerUps={powerUps} isInvincible={isInvincible} />;
       default:
         return null;
     }
-  }, [gameState, score, startGame, player, playerShots, opponents, enemyShots, explosions, round, isInvincible, togglePause, restartGame]);
+  }, [gameState, score, startGame, player, playerShots, opponents, enemyShots, explosions, powerUps, round, isInvincible, togglePause, restartGame]);
 
   return (
     <main className="flex flex-col items-center justify-center min-h-screen p-4 overflow-hidden">
       <div className="relative" style={{ width: GAME_WIDTH, height: GAME_HEIGHT }}>
-        {(gameState === 'playing' || gameState === 'levelTransition' || gameState === 'paused') && <Hud score={score} lives={lives} timeLeft={timeLeft} powerUpActive={isPowerUpActive} />}
+        {(gameState === 'playing' || gameState === 'levelTransition' || gameState === 'paused') && <Hud score={score} lives={lives} timeLeft={timeLeft} powerUpActive={isPowerUpActive} shieldActive={isInvincible} />}
         {gameContent}
       </div>
       <div className="text-center mt-4 text-xs max-w-2xl text-muted-foreground font-code px-4">

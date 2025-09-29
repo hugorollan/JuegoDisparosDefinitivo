@@ -32,3 +32,10 @@ export const HEXAGON_BOSS_WIDTH = 65;
 export const HEXAGON_BOSS_HEIGHT = 65;
 
 export const MAX_ROUNDS = 6;
+
+export const POWER_UP_WIDTH = 25;
+export const POWER_UP_HEIGHT = 25;
+export const POWER_UP_SPEED = 3;
+export const POWER_UP_DROP_CHANCE = 0.2; // 20%
+export const FAST_SHOT_DURATION = 10000; // 10 seconds
+export const SHIELD_DURATION = 10000; // 10 seconds

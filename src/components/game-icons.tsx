@@ -43,3 +43,21 @@ export const HexagonOpponentIcon = (props: SVGProps<SVGSVGElement>) => (
       <path d="M10 1 L19 5 L16 19 L4 19 L1 5 Z" />
     </svg>
 );
+
+export const ExtraLifeIcon = (props: SVGProps<SVGSVGElement>) => (
+    <svg viewBox="0 0 20 20" fill="currentColor" {...props}>
+        <path d="M10 3L12.35 7.65L17 8.3L13.5 11.5L14.29 16L10 13.5L5.71 16L6.5 11.5L3 8.3L7.65 7.65L10 3Z" />
+    </svg>
+);
+
+export const FastShotIcon = (props: SVGProps<SVGSVGElement>) => (
+    <svg viewBox="0 0 20 20" fill="currentColor" {...props}>
+        <path d="M10 2 L12 8 L18 8 L13 11 L15 17 L10 14 L5 17 L7 11 L2 8 L8 8 Z" />
+    </svg>
+);
+
+export const ShieldIcon = (props: SVGProps<SVGSVGElement>) => (
+    <svg viewBox="0 0 20 20" fill="currentColor" {...props}>
+        <path d="M10 2 C4 2, 4 8, 4 10 C4 15, 10 18, 10 18 C10 18, 16 15, 16 10 C16 8, 16 2, 10 2 Z" />
+    </svg>
+);
