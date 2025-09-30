@@ -78,12 +78,24 @@ export const stopMusic = () => {
 };
 
 const menuTheme = [
-  // Arpeggio
-  { freq: 261.63, duration: 0.25, delay: 0 }, { freq: 329.63, duration: 0.25, delay: 0.25 }, { freq: 392.00, duration: 0.25, delay: 0.5 }, { freq: 523.25, duration: 0.25, delay: 0.75 },
-  { freq: 261.63, duration: 0.25, delay: 1 }, { freq: 329.63, duration: 0.25, delay: 1.25 }, { freq: 392.00, duration: 0.25, delay: 1.5 }, { freq: 523.25, duration: 0.25, delay: 1.75 },
+  // Bass
+  { freq: 98.00, duration: 0.5, delay: 0 }, { freq: 98.00, duration: 0.5, delay: 1 },
+  { freq: 110.00, duration: 0.5, delay: 2 }, { freq: 110.00, duration: 0.5, delay: 3 },
+  { freq: 123.47, duration: 0.5, delay: 4 }, { freq: 123.47, duration: 0.5, delay: 5 },
+  { freq: 110.00, duration: 0.5, delay: 6 }, { freq: 110.00, duration: 0.5, delay: 7 },
   // Melody
-  { freq: 392.00, duration: 0.5, delay: 2 }, { freq: 440.00, duration: 0.5, delay: 2.5 }, { freq: 493.88, duration: 1, delay: 3 },
-  { freq: 392.00, duration: 0.5, delay: 4 }, { freq: 329.63, duration: 0.5, delay: 4.5 }, { freq: 349.23, duration: 1, delay: 5 },
+  { freq: 196.00, duration: 0.5, delay: 0 },
+  { freq: 246.94, duration: 0.5, delay: 0.5 },
+  { freq: 220.00, duration: 1, delay: 1 },
+  { freq: 196.00, duration: 0.5, delay: 2 },
+  { freq: 246.94, duration: 0.5, delay: 2.5 },
+  { freq: 220.00, duration: 1, delay: 3 },
+  { freq: 196.00, duration: 0.5, delay: 4 },
+  { freq: 246.94, duration: 0.5, delay: 4.5 },
+  { freq: 293.66, duration: 1, delay: 5 },
+  { freq: 246.94, duration: 0.5, delay: 6 },
+  { freq: 220.00, duration: 0.5, delay: 6.5 },
+  { freq: 196.00, duration: 1, delay: 7 },
 ];
 
 const gameTheme = [
@@ -108,7 +120,7 @@ const gameOverTheme = [
 
 
 export const playMenuMusic = () => {
-  playMusic(menuTheme, 140, true);
+  playMusic(menuTheme, 130, true);
 };
 
 export const playGameMusic = () => {
