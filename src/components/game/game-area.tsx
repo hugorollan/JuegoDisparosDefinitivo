@@ -15,11 +15,12 @@ interface GameAreaProps {
   isInvincible: boolean;
 }
 
-const Explosion = ({ x, y, width }: { x: number; y: number; width: number; }) => {
+const Explosion = ({ x, y, width, height }: { x: number; y: number; width: number; height: number; }) => {
     return (
-        <div style={{ left: x, top: y, width, height: width }} className="absolute">
-            <div className="absolute inset-0 animate-ping rounded-full bg-primary" />
-            <div className="absolute inset-0 animate-ping rounded-full bg-accent [animation-delay:0.1s]" />
+        <div style={{ left: x, top: y, width, height }} className="absolute flex items-center justify-center">
+            <div className="absolute w-full h-full bg-yellow-400 rounded-full animate-ping [animation-duration:0.3s]" />
+            <div className="absolute w-3/4 h-3/4 bg-orange-500 rounded-full animate-ping [animation-duration:0.3s] [animation-delay:0.05s]" />
+            <div className="absolute w-1/2 h-1/2 bg-red-600 rounded-full animate-ping [animation-duration:0.3s] [animation-delay:0.1s]" />
         </div>
     );
 };
@@ -96,7 +97,7 @@ export function GameArea({ player, playerShots, opponents, enemyShots, explosion
       ))}
 
       {explosions.map(exp => (
-        <Explosion key={exp.id} x={exp.x} y={exp.y} width={exp.width} />
+        <Explosion key={exp.id} x={exp.x} y={exp.y} width={exp.width} height={exp.height} />
       ))}
 
       {powerUps.map(powerUp => (
